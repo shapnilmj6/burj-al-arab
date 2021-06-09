@@ -12,7 +12,11 @@ const Login = () => {
     const { from } = location.state || { from: { pathname: "/" } };
 
     const handleGoogleSignIn = () => {
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        } else {
+            firebase.app();
+        }
         var provider = new firebase.auth.GoogleAuthProvider();
         firebase.auth()
             .signInWithPopup(provider)
@@ -20,17 +24,26 @@ const Login = () => {
                 const { displayName, email } = result.user;
                 const signedInUser = { name: displayName, email }
                 setLoggedInUser(signedInUser);
-                history.replace(from);
+                storeAuthToken();
             }).catch((error) => {
                 var errorMessage = error.message;
                 console.log(errorMessage);
             });
+
+        const storeAuthToken = () => {
+            firebase.auth().currentUser.getIdToken(true)
+                .then(function (idToken) {
+                    sessionStorage.setItem('token', idToken);
+                    history.replace(from);
+                }).catch(function (error) {
+                });
+        }
     }
     return (
         <div className="App">
             <h1>Sign in with google</h1>
             <button onClick={handleGoogleSignIn}>Sign In Google</button>
-            </div>
+        </div>
     );
 };
 
